@@ -19,13 +19,14 @@
                 <ul class="mt-4">
                     <li class="py-2"><button id="variant-a" class="hover:text-blue-500">Variant A</button></li>
                     <li class="py-2"><button id="variant-b" class="hover:text-blue-500">Variant B</button></li>
+                    <li class="py-2"><button id="results-history" class="hover:text-blue-500">Results History</button></li>
                 </ul>
                 <div class="flex-grow"></div>
                 <!-- Settings Section -->
                 <div class="border-t pt-4">
                     <h3 class="text-sm font-bold text-gray-600 mb-2">Settings</h3>
                     <button id="delete-all-history" class="hover:text-red-500 text-sm">Delete All History</button>
-                    <button id="next-value-toggle" class="btn btn-sm btn-outline mt-2">Show Next Value: On</button>
+                    <button id="next-value-toggle" class="hover:text-red-500 text-sm">Show Next Value: On</button>
                 </div>
             </div>
         </div>
@@ -59,7 +60,13 @@
                     <p class="text-sm text-gray-700">Click the circles in the correct order as quickly as possible. Variant A uses numbers, and Variant B alternates between numbers and letters.</p>
                     <button id="close-popup" class="mt-2 text-blue-500 hover:text-blue-400">Close</button>
                 </div>
-                <div id="trail-container" class="relative w-full h-[calc(100vh-8rem)] mt-4"></div>
+                <div id="trail-container" class="relative w-full h-[calc(100vh-8rem)] mt-4">
+                    <!-- Circles will be generated here -->
+                    <p id="initial-description" class="text-center">
+                        Welcome to the Trail Making Test! <br>
+                        <span id="choose-variant-intro" class="text-blue-600 font-bold">Choose a variant to start from the menu.</span>
+                    </p>
+                </div>
             </div>
 
             <!-- Results History Modal -->
@@ -102,6 +109,24 @@
         nextNodeDisplay.className = 'ml-4 text-yellow-600 font-bold hidden';
         nextNodeDisplay.textContent = 'Next: ';
         document.querySelector('.navbar .flex').appendChild(nextNodeDisplay);
+
+        const initialDescription = document.getElementById('initial-description');
+
+        function updateDescription(variant) {
+            if (variant === 'A') {
+                initialDescription.textContent = 'Variant A: Click the numbers in ascending order as quickly as possible.';
+            } else if (variant === 'B') {
+                initialDescription.textContent = 'Variant B: Alternate between numbers and letters in ascending order (e.g., 1, A, 2, B).';
+            }
+        }
+
+        document.getElementById('variant-a').addEventListener('click', () => {
+            updateDescription('A');
+        });
+
+        document.getElementById('variant-b').addEventListener('click', () => {
+            updateDescription('B');
+        });
 
         // Move the timer display after the next value clue
         document.querySelector('.navbar .flex').appendChild(timerDisplay);
@@ -245,16 +270,20 @@
         nextValueToggle.addEventListener('click', updateNextValuePreference);
 
         // Trail Making Test Script
-        function generateCircles(variant) {
+        function resetTestState() {
+            // Clear the trail container and reset variables
             trailContainer.innerHTML = '';
-            timerDisplay.classList.add('hidden'); // Ensure the timer is hidden initially
+            timerDisplay.classList.add('hidden');
             nextNodeDisplay.classList.add('hidden');
             currentNumber = 1;
-            failureCount = 0; // Reset failures
-            clearInterval(timerInterval); // Clear any previous timer
+            failureCount = 0;
+            clearInterval(timerInterval); // Stop any running timer
+        }
+
+        function generateCircles(variant) {
+            resetTestState(); // Ensure the test state is reset before generating new circles
 
             let timerStarted = false; // Track if the timer has started
-
             const items = [];
             if (variant === 'A') {
                 totalCircles = 25;
@@ -382,11 +411,6 @@
             localStorage.setItem('resultsHistory', JSON.stringify(results));
         }
 
-        // Render Variant A on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            generateCircles('A');
-        });
-
         // Add event listeners for Variant A and Variant B buttons
         let currentVariant = 'A'; // Track the current variant
         document.getElementById('variant-a').addEventListener('click', () => {
@@ -483,11 +507,17 @@
 
         // Show the Results History Modal when pressing "H"
         document.addEventListener('keydown', (event) => {
-            if (event.key.toLowerCase() === 'h') {
+            if (event.key.toLowerCase() === 'h' || event.key === 'H') {
                 console.debug('Key "H" pressed: Opening Results History Modal');
                 renderResultsHistory();
                 resultsHistoryModal.classList.remove('hidden');
             }
+        });
+
+        document.getElementById('results-history').addEventListener('click', () => {
+            console.debug('Results History button clicked: Opening Results History Modal');
+            renderResultsHistory();
+            resultsHistoryModal.classList.remove('hidden');
         });
 
         // Close the Results History Modal
