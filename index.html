@@ -46,6 +46,11 @@
                     <p id="trail-result" class="mt-4 text-green-600 font-bold hidden">Test completed successfully!</p>
                 </div>
                 <div class="flex items-center justify-end space-x-4">
+                    <button id="open-averages" class="text-blue-500 hover:text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M9 17l3-3 5 5M9 7l3 3 5-5" />
+                        </svg>
+                    </button>
                     <button id="open-results-history" class="text-blue-500 hover:text-blue-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7m-4-4H5a2 2 0 00-2 2v4h16V5a2 2 0 00-2-2z" />
@@ -94,6 +99,28 @@
                         <!-- Results will be dynamically added here -->
                     </ul>
                     <button id="close-history-modal" class="btn btn-primary w-full mt-5 sticky p-2 bg-blue-500 text-white rounded left-4 right-4 bottom-0">
+                        Close
+                    </button>
+                </div>
+            </div>
+
+            <!-- Averages Modal -->
+            <div id="averages-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded shadow-lg w-96">
+                    <h2 class="text-xl font-bold mb-4 text-center">📊 Average Times</h2>
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">🧪</span>
+                            <p id="average-tmt-a" class="text-gray-700 text-lg">TMT-A: N/A</p>
+                            <span id="average-tmt-a-icon" class="text-2xl"></span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">🔄</span>
+                            <p id="average-tmt-b" class="text-gray-700 text-lg">TMT-B: N/A</p>
+                            <span id="average-tmt-b-icon" class="text-2xl"></span>
+                        </div>
+                    </div>
+                    <button id="close-averages-modal" class="btn btn-primary w-full mt-6 bg-blue-500 text-white rounded-lg py-2 hover:bg-blue-600">
                         Close
                     </button>
                 </div>
@@ -609,6 +636,35 @@
         document.getElementById('open-results-history').addEventListener('click', () => {
             renderResultsHistory(); // Populate the results history
             document.getElementById('results-history-modal').classList.remove('hidden'); // Show the modal
+        });
+
+        document.getElementById('open-averages').addEventListener('click', () => {
+            const results = JSON.parse(localStorage.getItem('resultsHistory')) || [];
+            const tmtAResults = results.filter(result => result.variant === 'A');
+            const tmtBResults = results.filter(result => result.variant === 'B');
+
+            const averageA = tmtAResults.length
+                ? (tmtAResults.reduce((sum, result) => sum + parseFloat(result.timeTaken), 0) / tmtAResults.length).toFixed(2)
+                : 'N/A';
+            const averageB = tmtBResults.length
+                ? (tmtBResults.reduce((sum, result) => sum + parseFloat(result.timeTaken), 0) / tmtBResults.length).toFixed(2)
+                : 'N/A';
+
+            document.getElementById('average-tmt-a').textContent = `TMT-A: ${averageA} seconds`;
+            document.getElementById('average-tmt-b').textContent = `TMT-B: ${averageB} seconds`;
+
+            const averageAIcon = document.getElementById('average-tmt-a-icon');
+            const averageBIcon = document.getElementById('average-tmt-b-icon');
+
+            // Set icons based on performance interpretation
+            averageAIcon.textContent = averageA !== 'N/A' && averageA < 30 ? '🌟' : averageA <= 50 ? '👍' : '📉';
+            averageBIcon.textContent = averageB !== 'N/A' && averageB < 75 ? '🌟' : averageB <= 100 ? '👍' : '📉';
+
+            document.getElementById('averages-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-averages-modal').addEventListener('click', () => {
+            document.getElementById('averages-modal').classList.add('hidden');
         });
     </script>
 </body>
