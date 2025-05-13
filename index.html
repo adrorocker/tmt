@@ -63,21 +63,35 @@
                 </div>
                 <div id="trail-container" class="relative w-full h-[calc(100vh-8rem)] mt-4">
                     <!-- Circles will be generated here -->
-                    <p id="initial-description" class="text-center">
-                        Welcome to the Trail Making Test! <br>
-                        <span id="choose-variant-intro" class="text-blue-600 font-bold">Choose a variant to start from the menu.</span>
-                    </p>
+                    <div id="initial-description" class="flex flex-col items-center mt-8 space-y-6">
+                        <p class="text-center text-lg text-gray-700">
+                            Welcome to the <span class="text-blue-600 font-bold">Trail Making Test</span>! <br>
+                            <span id="choose-variant-intro" class="text-gray-600">
+                                Choose a variant to start and test your skills.
+                            </span>
+                        </p>
+                        <div class="flex space-x-4">
+                            <button id="start-variant-a" class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-300">
+                                Start Variant A
+                            </button>
+                            <button id="start-variant-b" class="px-6 py-3 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 transition duration-300">
+                                Start Variant B
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Results History Modal -->
-            <div id="results-history-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-                <div class="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
+            <div id="results-history-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden absolute z-50">
+                <div class="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto relative">
                     <h2 class="text-xl font-bold mb-4">Results History</h2>
                     <ul id="results-list" class="space-y-4">
                         <!-- Results will be dynamically added here -->
                     </ul>
-                    <button id="close-history-modal" class="btn btn-primary w-full mt-4">Close</button>
+                    <button id="close-history-modal" class="btn btn-primary w-full mt-5 sticky p-2 bg-blue-500 text-white rounded left-4 right-4 bottom-0">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -371,6 +385,14 @@
                 circle.style.left = `${left}px`;
                 circle.dataset.order = index + 1;
 
+                // Set font size based on screen width
+                circle.style.fontSize = '16px'; // Default font size
+                if (window.innerWidth >= 1024) {
+                    circle.style.fontSize = '20px'; // Larger font size for desktop screens
+                } else if (window.innerWidth >= 768) {
+                    circle.style.fontSize = '18px'; // Medium font size for tablets
+                }
+
                 circle.addEventListener('click', () => {
                     if (!timerStarted) {
                         startTimer(); // Start the timer on the first click
@@ -381,6 +403,9 @@
                             circle.classList.add('bg-green-500'); // Correct node with color feedback
                         }
                         resetErrorNodes(); // Reset any error nodes
+                        if (currentNumber === totalCircles) {
+                            circle.textContent += '!'; // Add "!" to the last node
+                        }
                         currentNumber++;
                         if (showNextValue) {
                             updateNextNodeDisplay(); // Update the next node display
@@ -393,7 +418,6 @@
                         }
                     } else {
                         circle.classList.add('bg-red-300'); // Incorrect node
-                        failureCount++;
                     }
                 });
 
@@ -480,6 +504,9 @@
             resultsModal.classList.add('hidden');
             if (lastTestResults) {
                 reopenModalButton.classList.remove('hidden');
+            }
+            if (currentVariant) {
+                generateCircles(currentVariant); // Reset the same variant test
             }
         });
 
@@ -576,6 +603,16 @@
                 console.debug('Key "Escape" pressed: Closing Results History Modal');
                 resultsHistoryModal.classList.add('hidden');
             }
+        });
+
+        document.getElementById('start-variant-a').addEventListener('click', () => {
+            currentVariant = 'A';
+            generateCircles('A');
+        });
+
+        document.getElementById('start-variant-b').addEventListener('click', () => {
+            currentVariant = 'B';
+            generateCircles('B');
         });
     </script>
 </body>
