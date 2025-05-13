@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trail Making Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 m-0 p-0 overflow-hidden">
+
+  <!-- Controls -->
+  <div id="controls" class="fixed top-2 left-2 z-10 flex flex-col gap-2">
+    <button onclick="startTest('A')" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">TMT A</button>
+    <button onclick="startTest('B')" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">TMT B</button>
+    <button onclick="showResults()" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">Show</button>
+    <button onclick="toggleHistory(true)" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">History</button>
+  </div>
+
+  <!-- Status & Next -->
+  <div id="status" class="fixed top-2 right-2 bg-white/80 px-4 py-2 rounded text-right text-sm">
+    Tap a test to begin
+  </div>
+  <div id="nextValue" class="fixed top-14 right-2 bg-white/80 px-4 py-1 rounded text-sm text-right"></div>
+
+  <!-- History Overlay -->
+  <div id="historyScreen" class="hidden fixed inset-0 z-20 bg-white flex flex-col p-4 overflow-y-auto">
+    <h2 class="text-xl font-bold mb-4 text-center">Test History</h2>
+    <div id="historyLog" class="flex flex-col gap-2 text-sm"></div>
+    <button onclick="toggleHistory(false)" class="mt-4 self-center px-4 py-2 bg-gray-700 text-white rounded">Close</button>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="canvas" class="w-screen h-screen touch-none block"></canvas>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const status = document.getElementById("status");
+    const nextDisplay = document.getElementById("nextValue");
+    const historyScreen = document.getElementById("historyScreen");
+    const historyLog = document.getElementById("historyLog");
+
+    let nodes = [], currentIndex = 0, radius = 36;
+    let errorCount = 0, testType = "A";
+    let timerStarted = false, startTime = null, endTime = null;
+    let completed = false, boundsToAvoid = [];
+    let resultsLog = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const controls = document.getElementById('controls').getBoundingClientRect();
+      boundsToAvoid = [controls];
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function generateNodes(type) {
+      nodes = [];
+      let values = [];
+      if (type === 'A') {
+        values = Array.from({ length: 25 }, (_, i) => (i + 1).toString());
+      } else {
+        for (let i = 1; i <= 13; i++) {
+          values.push(i.toString());
+          values.push(String.fromCharCode(64 + i));
+        }
+      }
+      values = shuffle(values);
+      const placed = [];
+      values.forEach(val => {
+        let x, y, tooClose;
+        do {
+          x = Math.random() * (canvas.width - 2 * radius) + radius;
+          y = Math.random() * (canvas.height - 2 * radius) + radius;
+          tooClose = placed.some(p => Math.hypot(p.x - x, p.y - y) < radius * 2.5);
+          const overlapsButton = boundsToAvoid.some(b =>
+            x > b.left - radius && x < b.right + radius &&
+            y > b.top - radius && y < b.bottom + radius
+          );
+          tooClose = tooClose || overlapsButton;
+        } while (tooClose);
+        placed.push({ x, y });
+        nodes.push({ value: val, x, y, clicked: false });
+      });
+    }
+
+    function expectedValue(index, type) {
+      if (type === 'A') return (index + 1).toString();
+      return index % 2 === 0
+        ? ((index / 2) + 1).toString()
+        : String.fromCharCode(65 + Math.floor(index / 2));
+    }
+
+    function drawNodes() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${radius * 0.6}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      nodes.forEach(n => {
+        const isLast = expectedValue(nodes.length - 1, testType) === n.value;
+        const label = isLast ? `${n.value}!` : n.value;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = n.clicked ? "#b0f2b6" : "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = "#333";
+        ctx.stroke();
+        ctx.fillStyle = "#000";
+        ctx.fillText(label, n.x, n.y);
+      });
+
+      if (testType === 'B' && currentIndex < nodes.length) {
+        const next = expectedValue(currentIndex, testType);
+        nextDisplay.textContent = `Next: ${next}`;
+      } else {
+        nextDisplay.textContent = '';
+      }
+    }
+
+    function startTest(type) {
+      resizeCanvas();
+      testType = type;
+      currentIndex = 0;
+      errorCount = 0;
+      timerStarted = false;
+      completed = false;
+      startTime = null;
+      endTime = null;
+      generateNodes(type);
+      drawNodes();
+      status.textContent = `Test ${type} started. Move to first correct node to begin.`;
+      historyScreen.classList.add('hidden');
+    }
+
+    function checkTouch(x, y) {
+      if (completed) return;
+      const expected = expectedValue(currentIndex, testType);
+
+      for (const n of nodes) {
+        const dx = n.x - x;
+        const dy = n.y - y;
+        if (!n.clicked && dx * dx + dy * dy < radius * radius) {
+          if (n.value === expected) {
+            if (!timerStarted && expected === expectedValue(0, testType)) {
+              startTime = performance.now();
+              timerStarted = true;
+              status.textContent = `Timer started!`;
+            }
+            if (timerStarted) {
+              n.clicked = true;
+              currentIndex++;
+              drawNodes();
+              if (currentIndex === nodes.length) {
+                completed = true;
+                endTime = performance.now();
+                const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+                status.textContent = `Test ${testType} done: ${timeTaken}s, Errors: ${errorCount}`;
+                logResult(testType, timeTaken, errorCount);
+              }
+            }
+          } else if (timerStarted) {
+            errorCount++;
+          }
+          break;
+        }
+      }
+    }
+
+    function getPerformanceLabel(type, time) {
+      const t = parseFloat(time);
+      if ((type === 'A' && t < 30) || (type === 'B' && t < 75)) return "🟢 Above Average";
+      if ((type === 'A' && t <= 50) || (type === 'B' && t <= 100)) return "🟡 Average";
+      return "🔴 Below Average";
+    }
+
+    function logResult(type, time, errors) {
+      const label = getPerformanceLabel(type, time);
+      const now = new Date().toLocaleString();
+      resultsLog.push({ type, time, errors, label, timestamp: now });
+    }
+
+    function showResults() {
+      const last = resultsLog.at(-1);
+      if (!last) {
+        alert("No results yet!");
+        return;
+      }
+      alert(`Test ${last.type}\nTime: ${last.time}s\nErrors: ${last.errors}\nPerformance: ${last.label}`);
+    }
+
+    function toggleHistory(show) {
+      if (show) {
+        historyScreen.classList.remove("hidden");
+        historyLog.innerHTML = "";
+        resultsLog.slice().reverse().forEach(r => {
+          historyLog.innerHTML += `
+            <div class="border-t border-gray-300 pt-2">
+              ${r.timestamp}<br>
+              Test ${r.type}, Time: ${r.time}s, Errors: ${r.errors} — ${r.label}
+            </div>
+          `;
+        });
+      } else {
+        historyScreen.classList.add("hidden");
+      }
+    }
+
+    canvas.addEventListener('touchmove', e => {
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      checkTouch(touch.clientX - rect.left, touch.clientY - rect.top);
+    }, { passive: false });
+
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      checkTouch(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    resizeCanvas();
+  </script>
+
+</body>
+</html>
