@@ -47,8 +47,13 @@
     let resultsLog = [];
 
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
       const controls = document.getElementById('controls').getBoundingClientRect();
       boundsToAvoid = [controls];
     }
@@ -73,8 +78,8 @@
       values.forEach(val => {
         let x, y, tooClose;
         do {
-          x = Math.random() * (canvas.width - 2 * radius) + radius;
-          y = Math.random() * (canvas.height - 2 * radius) + radius;
+          x = Math.random() * (canvas.width / (window.devicePixelRatio || 1) - 2 * radius) + radius;
+          y = Math.random() * (canvas.height / (window.devicePixelRatio || 1) - 2 * radius) + radius;
           tooClose = placed.some(p => Math.hypot(p.x - x, p.y - y) < radius * 2.5);
           const overlapsButton = boundsToAvoid.some(b =>
             x > b.left - radius && x < b.right + radius &&
@@ -209,12 +214,37 @@
       }
     }
 
+    // ⚙️ Throttled Touch Loop
+    let touchX = 0, touchY = 0, isTouching = false;
+
+    canvas.addEventListener('touchstart', e => {
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      touchX = touch.clientX - rect.left;
+      touchY = touch.clientY - rect.top;
+      isTouching = true;
+    }, { passive: true });
+
     canvas.addEventListener('touchmove', e => {
       const touch = e.touches[0];
       const rect = canvas.getBoundingClientRect();
-      checkTouch(touch.clientX - rect.left, touch.clientY - rect.top);
-    }, { passive: false });
+      touchX = touch.clientX - rect.left;
+      touchY = touch.clientY - rect.top;
+    }, { passive: true });
 
+    canvas.addEventListener('touchend', () => {
+      isTouching = false;
+    });
+
+    function touchLoop() {
+      if (isTouching) {
+        checkTouch(touchX, touchY);
+      }
+      requestAnimationFrame(touchLoop);
+    }
+    touchLoop();
+
+    // Click fallback
     canvas.addEventListener('click', e => {
       const rect = canvas.getBoundingClientRect();
       checkTouch(e.clientX - rect.left, e.clientY - rect.top);
