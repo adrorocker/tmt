@@ -506,10 +506,9 @@
 
         closeModal.addEventListener('click', () => {
             resultsModal.classList.add('hidden');
-            if (lastTestResults) {
-                reopenModalButton.classList.remove('hidden');
-            }
             if (currentVariant) {
+                currentNumber = 1; // Reset the current next number
+                nextNodeDisplay.textContent = 'Next: '; // Reset the next value display
                 generateCircles(currentVariant); // Reset the same variant test
             }
         });
@@ -534,15 +533,11 @@
         function resetTest() {
             lastTestResults = null;
             resultsModal.classList.add('hidden');
-            reopenModalButton.classList.add('hidden');
         }
 
         // Show the reopen button when results are available
         closeModal.addEventListener('click', () => {
             resultsModal.classList.add('hidden');
-            if (lastTestResults) {
-                reopenModalButton.classList.remove('hidden');
-            }
         });
 
         // Ensure the reopen button is hidden when the page loads
@@ -550,7 +545,6 @@
             // Initialize color-changing feedback state from localStorage
             colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? true;
             feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
-            reopenModalButton.classList.add('hidden');
         });
 
         // Ensure proper visibility toggling between sections
