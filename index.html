@@ -46,7 +46,11 @@
                     <p id="trail-result" class="mt-4 text-green-600 font-bold hidden">Test completed successfully!</p>
                 </div>
                 <div class="flex items-center justify-end space-x-4">
-                    <button id="reopen-modal" class="btn btn-secondary hidden">Reopen Last Results</button>
+                    <button id="open-results-history" class="text-blue-500 hover:text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7m-4-4H5a2 2 0 00-2 2v4h16V5a2 2 0 00-2-2z" />
+                        </svg>
+                    </button>
                     <button id="info-icon" class="text-blue-500 hover:text-blue-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
@@ -510,13 +514,6 @@
             }
         });
 
-        // Add a button to reopen the modal
-        const reopenModalButton = document.createElement('button');
-        reopenModalButton.id = 'reopen-modal';
-        reopenModalButton.className = 'btn btn-secondary mt-4';
-        reopenModalButton.textContent = 'Reopen Last Results';
-        reopenModalButton.addEventListener('click', reopenResultsModal);
-        document.querySelector('.navbar').appendChild(reopenModalButton);
 
         function showResultsModal(timeTaken, failures, variant) {
             modalTime.textContent = `⏱ Time: ${timeTaken} seconds`;
@@ -613,6 +610,11 @@
         document.getElementById('start-variant-b').addEventListener('click', () => {
             currentVariant = 'B';
             generateCircles('B');
+        });
+
+        document.getElementById('open-results-history').addEventListener('click', () => {
+            renderResultsHistory(); // Populate the results history
+            document.getElementById('results-history-modal').classList.remove('hidden'); // Show the modal
         });
     </script>
 </body>
