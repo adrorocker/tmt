@@ -24,12 +24,12 @@ It exists in two versions:
 
 ### ✅ Taking the Test Online
 
-1. Visit the website hosting the Trail Making Test.
+1. Visit the [TMT Web App](https://adrorocker.github.io/tmt/).
 2. Choose between **Variant A** or **Variant B**.
 3. Place your **index finger or mouse pointer** on circle **1**.
 4. Click the circles in the correct order (1 → 2 → 3 ... or 1 → A → 2 → B ...).
 5. The **timer will start automatically** when you click the first correct node.
-6. The final node will be marked upon completion.
+6. The final node will be marked with a **"!"** upon completion.
 7. View your time, errors, and feedback in the **Results Modal**.
 8. Check the **Results History** screen to view past attempts, ordered by date.
 
@@ -50,8 +50,8 @@ This test is offered for **exploring mental processing speed** in an abstract an
 
 | Test  | Above Average  | Average Range  | Below Average    |
 |-------|----------------|----------------|------------------|
-| TMT-A | < 30 seconds   | 30–50 seconds  | > 50 seconds     |
-| TMT-B | < 75 seconds   | 75–100 seconds | > 100 seconds    |
+| TMT-A | < 30 seconds   | 30–77 seconds  | > 78 seconds     |
+| TMT-B | < 75 seconds   | 75–237 seconds | > 238 seconds    |
 
 Results include:
 - ✅ Time to complete (in seconds)
