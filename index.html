@@ -27,6 +27,7 @@
                     <h3 class="text-sm font-bold text-gray-600 mb-2">Settings</h3>
                     <button id="delete-all-history" class="hover:text-red-500 text-sm">Delete All History</button>
                     <button id="next-value-toggle" class="hover:text-red-500 text-sm">Show Next Value: On</button>
+                    <button id="feedback-toggle" class="hover:text-blue-500 text-sm">Color Feedback: On</button>
                 </div>
             </div>
         </div>
@@ -71,7 +72,7 @@
 
             <!-- Results History Modal -->
             <div id="results-history-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-                <div class="bg-white p-6 rounded shadow-lg w-96">
+                <div class="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
                     <h2 class="text-xl font-bold mb-4">Results History</h2>
                     <ul id="results-list" class="space-y-4">
                         <!-- Results will be dynamically added here -->
@@ -139,6 +140,8 @@
         let startTime;
         let timerInterval;
         let failureCount = 0; // Track the number of failures
+
+        let colorChangingFeedback = true; // Configuration for color-changing feedback
 
         // Toggle sidebar open/close
         function toggleSidebar() {
@@ -296,6 +299,17 @@
 
         nextValueToggle.addEventListener('click', updateNextValuePreference);
 
+        // Toggle color-changing feedback
+        function toggleColorChangingFeedback() {
+            colorChangingFeedback = !colorChangingFeedback;
+            localStorage.setItem('colorChangingFeedback', JSON.stringify(colorChangingFeedback));
+            feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
+        }
+
+        // Add a toggle button for color-changing feedback in the settings section
+        const feedbackToggle = document.getElementById('feedback-toggle');
+        feedbackToggle.addEventListener('click', toggleColorChangingFeedback);
+
         // Trail Making Test Script
         function resetTestState() {
             // Clear the trail container and reset variables
@@ -363,7 +377,9 @@
                         timerStarted = true;
                     }
                     if (parseInt(circle.dataset.order) === currentNumber) {
-                        circle.classList.add('bg-green-500');
+                        if (colorChangingFeedback) {
+                            circle.classList.add('bg-green-500'); // Correct node with color feedback
+                        }
                         resetErrorNodes(); // Reset any error nodes
                         currentNumber++;
                         if (showNextValue) {
@@ -376,7 +392,7 @@
                             showResultsModal(timeTaken, failureCount, variant); // Show modal with results
                         }
                     } else {
-                        circle.classList.add('bg-red-300'); // Highlight incorrect node
+                        circle.classList.add('bg-red-300'); // Incorrect node
                         failureCount++;
                     }
                 });
@@ -507,6 +523,9 @@
 
         // Ensure the reopen button is hidden when the page loads
         window.addEventListener('DOMContentLoaded', () => {
+            // Initialize color-changing feedback state from localStorage
+            colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? true;
+            feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
             reopenModalButton.classList.add('hidden');
         });
 
