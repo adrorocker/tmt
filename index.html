@@ -1,257 +1,508 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Trail Making Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Making Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 m-0 p-0 overflow-hidden">
-
-  <!-- Controls -->
-  <div id="controls" class="fixed top-2 left-2 z-10 flex flex-col gap-2">
-    <button onclick="startTest('A')" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">TMT A</button>
-    <button onclick="startTest('B')" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">TMT B</button>
-    <button onclick="showResults()" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">Show</button>
-    <button onclick="toggleHistory(true)" class="text-xs px-3 py-1 rounded bg-gray-700 text-white">History</button>
-  </div>
-
-  <!-- Status & Next -->
-  <div id="status" class="fixed top-2 right-2 bg-white/80 px-4 py-2 rounded text-right text-sm">
-    Tap a test to begin
-  </div>
-  <div id="nextValue" class="fixed top-14 right-2 bg-white/80 px-4 py-1 rounded text-sm text-right"></div>
-
-  <!-- History Overlay -->
-  <div id="historyScreen" class="hidden fixed inset-0 z-20 bg-white flex flex-col p-4 overflow-y-auto">
-    <h2 class="text-xl font-bold mb-4 text-center">Test History</h2>
-    <div id="historyLog" class="flex flex-col gap-2 text-sm"></div>
-    <button onclick="toggleHistory(false)" class="mt-4 self-center px-4 py-2 bg-gray-700 text-white rounded">Close</button>
-  </div>
-
-  <!-- Canvas -->
-  <canvas id="canvas" class="w-screen h-screen touch-none block"></canvas>
-
-  <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const status = document.getElementById("status");
-    const nextDisplay = document.getElementById("nextValue");
-    const historyScreen = document.getElementById("historyScreen");
-    const historyLog = document.getElementById("historyLog");
-
-    let nodes = [], currentIndex = 0, radius = 36;
-    let errorCount = 0, testType = "A";
-    let timerStarted = false, startTime = null, endTime = null;
-    let completed = false, boundsToAvoid = [];
-    let resultsLog = [];
-
-    function resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
-      const controls = document.getElementById('controls').getBoundingClientRect();
-      boundsToAvoid = [controls];
-    }
-
-    function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
-    }
-
-    function generateNodes(type) {
-      nodes = [];
-      let values = [];
-      if (type === 'A') {
-        values = Array.from({ length: 25 }, (_, i) => (i + 1).toString());
-      } else {
-        for (let i = 1; i <= 13; i++) {
-          values.push(i.toString());
-          values.push(String.fromCharCode(64 + i));
-        }
-      }
-      values = shuffle(values);
-      const placed = [];
-      values.forEach(val => {
-        let x, y, tooClose;
-        do {
-          x = Math.random() * (canvas.width / (window.devicePixelRatio || 1) - 2 * radius) + radius;
-          y = Math.random() * (canvas.height / (window.devicePixelRatio || 1) - 2 * radius) + radius;
-          tooClose = placed.some(p => Math.hypot(p.x - x, p.y - y) < radius * 2.5);
-          const overlapsButton = boundsToAvoid.some(b =>
-            x > b.left - radius && x < b.right + radius &&
-            y > b.top - radius && y < b.bottom + radius
-          );
-          tooClose = tooClose || overlapsButton;
-        } while (tooClose);
-        placed.push({ x, y });
-        nodes.push({ value: val, x, y, clicked: false });
-      });
-    }
-
-    function expectedValue(index, type) {
-      if (type === 'A') return (index + 1).toString();
-      return index % 2 === 0
-        ? ((index / 2) + 1).toString()
-        : String.fromCharCode(65 + Math.floor(index / 2));
-    }
-
-    function drawNodes() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = `${radius * 0.6}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-
-      nodes.forEach(n => {
-        const isLast = expectedValue(nodes.length - 1, testType) === n.value;
-        const label = isLast ? `${n.value}!` : n.value;
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = n.clicked ? "#b0f2b6" : "#ffffff";
-        ctx.fill();
-        ctx.strokeStyle = "#333";
-        ctx.stroke();
-        ctx.fillStyle = "#000";
-        ctx.fillText(label, n.x, n.y);
-      });
-
-      if (testType === 'B' && currentIndex < nodes.length) {
-        const next = expectedValue(currentIndex, testType);
-        nextDisplay.textContent = `Next: ${next}`;
-      } else {
-        nextDisplay.textContent = '';
-      }
-    }
-
-    function startTest(type) {
-      resizeCanvas();
-      testType = type;
-      currentIndex = 0;
-      errorCount = 0;
-      timerStarted = false;
-      completed = false;
-      startTime = null;
-      endTime = null;
-      generateNodes(type);
-      drawNodes();
-      status.textContent = `Test ${type} started. Move to first correct node to begin.`;
-      historyScreen.classList.add('hidden');
-    }
-
-    function checkTouch(x, y) {
-      if (completed) return;
-      const expected = expectedValue(currentIndex, testType);
-
-      for (const n of nodes) {
-        const dx = n.x - x;
-        const dy = n.y - y;
-        if (!n.clicked && dx * dx + dy * dy < radius * radius) {
-          if (n.value === expected) {
-            if (!timerStarted && expected === expectedValue(0, testType)) {
-              startTime = performance.now();
-              timerStarted = true;
-              status.textContent = `Timer started!`;
-            }
-            if (timerStarted) {
-              n.clicked = true;
-              currentIndex++;
-              drawNodes();
-              if (currentIndex === nodes.length) {
-                completed = true;
-                endTime = performance.now();
-                const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
-                status.textContent = `Test ${testType} done: ${timeTaken}s, Errors: ${errorCount}`;
-                logResult(testType, timeTaken, errorCount);
-              }
-            }
-          } else if (timerStarted) {
-            errorCount++;
-          }
-          break;
-        }
-      }
-    }
-
-    function getPerformanceLabel(type, time) {
-      const t = parseFloat(time);
-      if ((type === 'A' && t < 30) || (type === 'B' && t < 75)) return "🟢 Above Average";
-      if ((type === 'A' && t <= 50) || (type === 'B' && t <= 100)) return "🟡 Average";
-      return "🔴 Below Average";
-    }
-
-    function logResult(type, time, errors) {
-      const label = getPerformanceLabel(type, time);
-      const now = new Date().toLocaleString();
-      resultsLog.push({ type, time, errors, label, timestamp: now });
-    }
-
-    function showResults() {
-      const last = resultsLog.at(-1);
-      if (!last) {
-        alert("No results yet!");
-        return;
-      }
-      alert(`Test ${last.type}\nTime: ${last.time}s\nErrors: ${last.errors}\nPerformance: ${last.label}`);
-    }
-
-    function toggleHistory(show) {
-      if (show) {
-        historyScreen.classList.remove("hidden");
-        historyLog.innerHTML = "";
-        resultsLog.slice().reverse().forEach(r => {
-          historyLog.innerHTML += `
-            <div class="border-t border-gray-300 pt-2">
-              ${r.timestamp}<br>
-              Test ${r.type}, Time: ${r.time}s, Errors: ${r.errors} — ${r.label}
+<body class="bg-gray-100">
+    <div id="layout" class="flex h-screen transition-transform duration-300">
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed bg-gray-200 top-0 left-0 w-64 h-full transform transition-transform duration-300 -translate-x-full">
+            <div class="p-4 flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center">
+                    <span class="text-xl font-bold text-blue-500">Trail Making Test</span>
+                </div>
+                <!-- Main Menu -->
+                <ul class="mt-4">
+                    <li class="py-2"><button id="variant-a" class="hover:text-blue-500">Variant A</button></li>
+                    <li class="py-2"><button id="variant-b" class="hover:text-blue-500">Variant B</button></li>
+                </ul>
+                <div class="flex-grow"></div>
+                <!-- Settings Section -->
+                <div class="border-t pt-4">
+                    <h3 class="text-sm font-bold text-gray-600 mb-2">Settings</h3>
+                    <button id="delete-all-history" class="hover:text-red-500 text-sm">Delete All History</button>
+                    <button id="next-value-toggle" class="btn btn-sm btn-outline mt-2">Show Next Value: On</button>
+                </div>
             </div>
-          `;
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="flex-1 transform transition-transform duration-300">
+            <!-- Navbar -->
+            <div class="navbar flex justify-between items-center p-4">
+                <div class="flex items-center">
+                    <button id="menu-toggle" class="btn btn-square btn-ghost">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                    <p id="timer-display" class="ml-4 text-blue-600 font-bold hidden">Time: 0 seconds</p>
+                    <p id="trail-result" class="mt-4 text-green-600 font-bold hidden">Test completed successfully!</p>
+                </div>
+                <div class="flex items-center justify-end space-x-4">
+                    <button id="reopen-modal" class="btn btn-secondary hidden">Reopen Last Results</button>
+                    <button id="info-icon" class="text-blue-500 hover:text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page Content -->
+            <div id="trail-test" class="p-4">
+                <div id="info-popup" class="hidden absolute top-16 right-4 bg-white border border-gray-300 shadow-lg p-4 rounded w-64 z-10">
+                    <p class="text-sm text-gray-700">Click the circles in the correct order as quickly as possible. Variant A uses numbers, and Variant B alternates between numbers and letters.</p>
+                    <button id="close-popup" class="mt-2 text-blue-500 hover:text-blue-400">Close</button>
+                </div>
+                <div id="trail-container" class="relative w-full h-[calc(100vh-8rem)] mt-4"></div>
+            </div>
+
+            <!-- Results History Modal -->
+            <div id="results-history-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded shadow-lg w-96">
+                    <h2 class="text-xl font-bold mb-4">Results History</h2>
+                    <ul id="results-list" class="space-y-4">
+                        <!-- Results will be dynamically added here -->
+                    </ul>
+                    <button id="close-history-modal" class="btn btn-primary w-full mt-4">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="results-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded shadow-lg w-96">
+            <h2 class="text-xl font-bold mb-4">Test Results</h2>
+            <p id="modal-time" class="text-gray-700 mb-2">⏱ Time: 0.00 seconds</p>
+            <p id="modal-failures" class="text-gray-700 mb-2">❌ Failures: 0</p>
+            <p id="modal-feedback" class="text-blue-600 italic mb-4">Feedback goes here</p>
+            <button id="close-modal" class="btn btn-primary w-full">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const infoIcon = document.getElementById('info-icon');
+        const infoPopup = document.getElementById('info-popup');
+        const closePopup = document.getElementById('close-popup');
+        const trailTest = document.getElementById('trail-test');
+        const resultsList = document.getElementById('results-list');
+        const trailContainer = document.getElementById('trail-container');
+        const trailResult = document.getElementById('trail-result');
+        const timerDisplay = document.getElementById('timer-display');
+        const nextNodeDisplay = document.createElement('p');
+        nextNodeDisplay.id = 'next-node-display';
+        nextNodeDisplay.className = 'ml-4 text-yellow-600 font-bold hidden';
+        nextNodeDisplay.textContent = 'Next: ';
+        document.querySelector('.navbar .flex').appendChild(nextNodeDisplay);
+
+        // Move the timer display after the next value clue
+        document.querySelector('.navbar .flex').appendChild(timerDisplay);
+
+        const nextValueToggle = document.getElementById('next-value-toggle');
+        let showNextValue = JSON.parse(localStorage.getItem('showNextValue')) ?? true;
+
+        let currentNumber = 1;
+        let totalCircles = 0;
+        let startTime;
+        let timerInterval;
+        let failureCount = 0; // Track the number of failures
+
+        menuToggle.addEventListener('click', () => {
+            const isSidebarOpen = sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('translate-x-0', !isSidebarOpen);
+            mainContent.style.transform = isSidebarOpen ? 'translateX(0)' : 'translateX(16rem)';
+
+            // Prevent scrolling when the sidebar is open
+            document.body.style.overflow = isSidebarOpen ? 'auto' : 'hidden';
         });
-      } else {
-        historyScreen.classList.add("hidden");
-      }
-    }
 
-    // ⚙️ Throttled Touch Loop
-    let touchX = 0, touchY = 0, isTouching = false;
+        // Info Popup Logic
+        infoIcon.addEventListener('click', () => {
+            infoPopup.classList.toggle('hidden');
+        });
 
-    canvas.addEventListener('touchstart', e => {
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      touchX = touch.clientX - rect.left;
-      touchY = touch.clientY - rect.top;
-      isTouching = true;
-    }, { passive: true });
+        closePopup.addEventListener('click', () => {
+            infoPopup.classList.add('hidden');
+        });
 
-    canvas.addEventListener('touchmove', e => {
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      touchX = touch.clientX - rect.left;
-      touchY = touch.clientY - rect.top;
-    }, { passive: true });
 
-    canvas.addEventListener('touchend', () => {
-      isTouching = false;
-    });
+        const deleteAllHistoryButton = document.getElementById('delete-all-history');
 
-    function touchLoop() {
-      if (isTouching) {
-        checkTouch(touchX, touchY);
-      }
-      requestAnimationFrame(touchLoop);
-    }
-    touchLoop();
+        deleteAllHistoryButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete all history? This action cannot be undone.')) {
+                localStorage.removeItem('resultsHistory');
+                renderResultsHistory(); // Refresh the history page
+            }
+        });
 
-    // Click fallback
-    canvas.addEventListener('click', e => {
-      const rect = canvas.getBoundingClientRect();
-      checkTouch(e.clientX - rect.left, e.clientY - rect.top);
-    });
+        function renderResultsHistory() {
+            resultsList.innerHTML = '';
+            const results = JSON.parse(localStorage.getItem('resultsHistory')) || [];
+            if (results.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = '📭 No results available.';
+                emptyMessage.className = 'text-gray-500';
+                resultsList.appendChild(emptyMessage);
+                return;
+            }
 
-    resizeCanvas();
-  </script>
+            // Sort results by date in descending order
+            results.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            results.forEach((result, index) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'p-2 bg-white shadow rounded border border-gray-200 flex justify-between items-center max-w-full overflow-hidden';
+
+                const details = document.createElement('div');
+                details.className = 'text-sm';
+
+                const variant = document.createElement('p');
+                variant.textContent = `🧪 Variant: ${result.variant}`;
+                variant.className = 'text-gray-700 font-bold';
+
+                const timeTaken = document.createElement('p');
+                timeTaken.textContent = `⏱ Time: ${result.timeTaken} seconds`;
+                timeTaken.className = 'text-gray-600';
+
+                const failures = document.createElement('p');
+                failures.textContent = `❌ Failures: ${result.failures || 0}`;
+                failures.className = result.failures > 0 ? 'text-red-500' : 'text-green-500';
+
+                const feedback = document.createElement('p');
+                feedback.textContent = getPerformanceFeedback(result.timeTaken, result.failures, result.variant);
+                feedback.className = 'text-blue-600 italic';
+
+                const date = document.createElement('p');
+                date.textContent = `📅 Date: ${result.date}`;
+                date.className = 'text-gray-500 text-xs';
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '🗑 Delete';
+                deleteButton.className = 'text-red-500 hover:text-red-700 text-sm pt-3 border-t';
+                deleteButton.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to delete this history item?')) {
+                        results.splice(index, 1);
+                        localStorage.setItem('resultsHistory', JSON.stringify(results));
+                        renderResultsHistory(); // Refresh the history page
+                    }
+                });
+
+                details.appendChild(variant);
+                details.appendChild(timeTaken);
+                details.appendChild(failures);
+                details.appendChild(feedback);
+                details.appendChild(date);
+                details.appendChild(deleteButton);
+
+
+
+                listItem.appendChild(details);
+
+                resultsList.appendChild(listItem);
+            });
+        }
+
+        function getPerformanceFeedback(timeTaken, failures, variant) {
+            if (variant === 'A') {
+                if (timeTaken < 30) {
+                    return '🌟 Above Average Performance!';
+                } else if (timeTaken >= 30 && timeTaken <= 50) {
+                    return '👍 Average Performance.';
+                } else {
+                    return '📉 Below Average Performance.';
+                }
+            } else if (variant === 'B') {
+                if (timeTaken < 75) {
+                    return '🌟 Above Average Performance!';
+                } else if (timeTaken >= 75 && timeTaken <= 100) {
+                    return '👍 Average Performance.';
+                } else {
+                    return '📉 Below Average Performance.';
+                }
+            }
+            return '❓ Invalid variant.';
+        }
+
+        function updateNextValuePreference() {
+            showNextValue = !showNextValue;
+            localStorage.setItem('showNextValue', JSON.stringify(showNextValue));
+            nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
+            if (!showNextValue) {
+                nextNodeDisplay.classList.add('hidden');
+            } else {
+                updateNextNodeDisplay();
+            }
+        }
+
+        nextValueToggle.addEventListener('click', updateNextValuePreference);
+
+        // Trail Making Test Script
+        function generateCircles(variant) {
+            trailContainer.innerHTML = '';
+            timerDisplay.classList.add('hidden'); // Ensure the timer is hidden initially
+            nextNodeDisplay.classList.add('hidden');
+            currentNumber = 1;
+            failureCount = 0; // Reset failures
+            clearInterval(timerInterval); // Clear any previous timer
+
+            let timerStarted = false; // Track if the timer has started
+
+            const items = [];
+            if (variant === 'A') {
+                totalCircles = 25;
+                for (let i = 1; i <= totalCircles; i++) {
+                    items.push(i.toString());
+                }
+            } else if (variant === 'B') {
+                totalCircles = 26; // Adjust total circles for alternating numbers and letters
+                for (let i = 1; i <= totalCircles / 2; i++) {
+                    items.push(i.toString());
+                    items.push(String.fromCharCode(64 + i)); // A, B, C...
+                }
+            }
+
+            const containerRect = trailContainer.getBoundingClientRect();
+            const nodeSize = calculateNodeSize(); // Dynamically calculate node size
+            const positions = [];
+            items.forEach((item, index) => {
+                let top, left;
+                let overlap;
+                do {
+                    overlap = false;
+                    top = Math.random() * (containerRect.height - nodeSize); // Avoid edges
+                    left = Math.random() * (containerRect.width - nodeSize); // Avoid edges
+                    for (const pos of positions) {
+                        const distance = Math.sqrt(
+                            Math.pow(pos.top - top, 2) + Math.pow(pos.left - left, 2)
+                        );
+                        if (distance < nodeSize) { // Minimum distance between circles
+                            overlap = true;
+                            break;
+                        }
+                    }
+                } while (overlap);
+
+                positions.push({ top, left });
+
+                const circle = document.createElement('div');
+                circle.textContent = item;
+                circle.className = 'absolute border border-black flex items-center justify-center rounded-full cursor-pointer';
+                circle.style.width = `${nodeSize}px`;
+                circle.style.height = `${nodeSize}px`;
+                circle.style.top = `${top}px`;
+                circle.style.left = `${left}px`;
+                circle.dataset.order = index + 1;
+
+                circle.addEventListener('click', () => {
+                    if (!timerStarted) {
+                        startTimer(); // Start the timer on the first click
+                        timerStarted = true;
+                    }
+                    if (parseInt(circle.dataset.order) === currentNumber) {
+                        circle.classList.add('bg-green-500');
+                        resetErrorNodes(); // Reset any error nodes
+                        currentNumber++;
+                        if (showNextValue) {
+                            updateNextNodeDisplay(); // Update the next node display
+                        }
+                        if (currentNumber > totalCircles) {
+                            stopTimer();
+                            const timeTaken = ((new Date() - startTime) / 1000).toFixed(2);
+                            saveResultToLocalStorage(variant, timeTaken, failureCount);
+                            showResultsModal(timeTaken, failureCount, variant); // Show modal with results
+                        }
+                    } else {
+                        circle.classList.add('bg-red-300'); // Highlight incorrect node
+                        failureCount++;
+                    }
+                });
+
+                trailContainer.appendChild(circle);
+            });
+
+            if (variant === 'B' && showNextValue) {
+                updateNextNodeDisplay(); // Display the first node for Variant B
+            }
+        }
+
+        function updateNextNodeDisplay() {
+            const nextNode = document.querySelector(`[data-order="${currentNumber}"]`);
+            if (nextNode) {
+                nextNodeDisplay.textContent = `Next: ${nextNode.textContent}`;
+                nextNodeDisplay.classList.remove('hidden');
+            } else {
+                nextNodeDisplay.classList.add('hidden');
+            }
+        }
+
+        function calculateNodeSize() {
+            const screenWidth = window.innerWidth;
+            if (screenWidth >= 1024) {
+                return 74; // Larger size for desktop screens
+            } else if (screenWidth >= 768) {
+                return 56; // Medium size for tablets
+            } else {
+                return 64; // Default size for smaller screens
+            }
+        }
+
+        function startTimer() {
+            startTime = new Date();
+            timerDisplay.textContent = `⏱ 0 seconds`; // Display timer immediately
+            timerDisplay.classList.remove('hidden'); // Ensure the timer is visible from the start
+            timerInterval = setInterval(() => {
+                const elapsedTime = Math.floor((new Date() - startTime) / 1000); // Display only seconds
+                timerDisplay.textContent = `⏱ ${elapsedTime} seconds`;
+            }, 1000); // Update every second
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerDisplay.classList.add('hidden'); // Hide the timer after the test is completed
+        }
+
+        function resetErrorNodes() {
+            const errorNodes = document.querySelectorAll('.bg-red-300');
+            errorNodes.forEach(node => {
+                node.classList.remove('bg-red-300');
+            });
+        }
+
+        function saveResultToLocalStorage(variant, timeTaken, failures) {
+            const results = JSON.parse(localStorage.getItem('resultsHistory')) || [];
+            results.push({ variant, timeTaken, failures, date: new Date().toLocaleString() });
+            localStorage.setItem('resultsHistory', JSON.stringify(results));
+        }
+
+        // Render Variant A on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            generateCircles('A');
+        });
+
+        // Add event listeners for Variant A and Variant B buttons
+        let currentVariant = 'A'; // Track the current variant
+        document.getElementById('variant-a').addEventListener('click', () => {
+            currentVariant = 'A';
+            generateCircles('A');
+        });
+        document.getElementById('variant-b').addEventListener('click', () => {
+            currentVariant = 'B';
+            generateCircles('B');
+        });
+
+        // Initialize the toggle button state
+        nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
+
+        const resultsModal = document.getElementById('results-modal');
+        const modalTime = document.getElementById('modal-time');
+        const modalFailures = document.getElementById('modal-failures');
+        const modalFeedback = document.getElementById('modal-feedback');
+        const closeModal = document.getElementById('close-modal');
+
+        let lastTestResults = null; // Store the last test results
+
+        closeModal.addEventListener('click', () => {
+            resultsModal.classList.add('hidden');
+            if (lastTestResults) {
+                reopenModalButton.classList.remove('hidden');
+            }
+        });
+
+        // Add a button to reopen the modal
+        const reopenModalButton = document.createElement('button');
+        reopenModalButton.id = 'reopen-modal';
+        reopenModalButton.className = 'btn btn-secondary mt-4';
+        reopenModalButton.textContent = 'Reopen Last Results';
+        reopenModalButton.addEventListener('click', reopenResultsModal);
+        document.querySelector('.navbar').appendChild(reopenModalButton);
+
+        function showResultsModal(timeTaken, failures, variant) {
+            modalTime.textContent = `⏱ Time: ${timeTaken} seconds`;
+            modalFailures.textContent = `❌ Failures: ${failures}`;
+            modalFeedback.textContent = getPerformanceFeedback(timeTaken, failures, variant);
+            resultsModal.classList.remove('hidden');
+            lastTestResults = { timeTaken, failures, variant }; // Save the last test results
+        }
+
+        function reopenResultsModal() {
+            if (lastTestResults) {
+                const { timeTaken, failures, variant } = lastTestResults;
+                showResultsModal(timeTaken, failures, variant);
+            }
+        }
+
+        // Hide the reopen button when a new test starts
+        function resetTest() {
+            lastTestResults = null;
+            resultsModal.classList.add('hidden');
+            reopenModalButton.classList.add('hidden');
+        }
+
+        // Show the reopen button when results are available
+        closeModal.addEventListener('click', () => {
+            resultsModal.classList.add('hidden');
+            if (lastTestResults) {
+                reopenModalButton.classList.remove('hidden');
+            }
+        });
+
+        // Ensure the reopen button is hidden when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            reopenModalButton.classList.add('hidden');
+        });
+
+        // Ensure proper visibility toggling between sections
+        function showTrailTest() {
+            trailTest.classList.remove('hidden');
+            resultsHistoryPage.classList.add('hidden');
+        }
+
+        function showResultsHistory() {
+            trailTest.classList.add('hidden');
+            resultsHistoryPage.classList.remove('hidden');
+        }
+
+        document.querySelectorAll('#variant-a, #variant-b').forEach(button => {
+            button.addEventListener('click', () => {
+                showTrailTest();
+                const variant = button.id === 'variant-a' ? 'A' : 'B';
+                generateCircles(variant);
+            });
+        });
+
+        const resultsHistoryModal = document.getElementById('results-history-modal');
+        const closeHistoryModalButton = document.getElementById('close-history-modal');
+
+        // Show the Results History Modal when pressing "H"
+        document.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'h') {
+                console.debug('Key "H" pressed: Opening Results History Modal');
+                renderResultsHistory();
+                resultsHistoryModal.classList.remove('hidden');
+            }
+        });
+
+        // Close the Results History Modal
+        closeHistoryModalButton.addEventListener('click', () => {
+            console.debug('Closing Results History Modal');
+            resultsHistoryModal.classList.add('hidden');
+        });
+
+        // Close the Results History Modal when pressing "Escape"
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !resultsHistoryModal.classList.contains('hidden')) {
+                console.debug('Key "Escape" pressed: Closing Results History Modal');
+                resultsHistoryModal.classList.add('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
