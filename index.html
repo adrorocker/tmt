@@ -9,7 +9,7 @@
 <body class="bg-gray-100">
     <div id="layout" class="flex h-screen transition-transform duration-300">
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed bg-gray-200 top-0 left-0 w-64 h-full transform transition-transform duration-300 -translate-x-full">
+        <div id="sidebar" class="fixed bg-gray-200 top-0 left-0 w-64 h-full transform transition-transform duration-300 -translate-x-full z-20">
             <div class="p-4 flex flex-col h-full">
                 <!-- Logo -->
                 <div class="flex items-center justify-center">
@@ -34,7 +34,7 @@
         <!-- Main Content -->
         <div id="main-content" class="flex-1 transform transition-transform duration-300">
             <!-- Navbar -->
-            <div class="navbar flex justify-between items-center p-4">
+            <div class="navbar flex justify-between items-center p-4 z-50">
                 <div class="flex items-center">
                     <button id="menu-toggle" class="btn btn-square btn-ghost">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,13 +140,40 @@
         let timerInterval;
         let failureCount = 0; // Track the number of failures
 
-        menuToggle.addEventListener('click', () => {
+        // Toggle sidebar open/close
+        function toggleSidebar() {
             const isSidebarOpen = sidebar.classList.toggle('-translate-x-full');
             sidebar.classList.toggle('translate-x-0', !isSidebarOpen);
-            mainContent.style.transform = isSidebarOpen ? 'translateX(0)' : 'translateX(16rem)';
+            document.body.style.overflow = isSidebarOpen ? 'auto' : 'hidden'; // Prevent scrolling when open
+        }
 
-            // Prevent scrolling when the sidebar is open
-            document.body.style.overflow = isSidebarOpen ? 'auto' : 'hidden';
+        // Close the sidebar
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Open the sidebar
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+
+        // Add event listener for menu toggle button
+        menuToggle.addEventListener('click', toggleSidebar);
+
+        // Close the sidebar when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                closeSidebar();
+            }
+        });
+
+        // Close the sidebar when clicking a menu link
+        document.querySelectorAll('#sidebar button').forEach((button) => {
+            button.addEventListener('click', closeSidebar);
         });
 
         // Info Popup Logic
@@ -379,7 +406,7 @@
             } else if (screenWidth >= 768) {
                 return 56; // Medium size for tablets
             } else {
-                return 64; // Default size for smaller screens
+                return 60; // Default size for smaller screens
             }
         }
 
@@ -486,12 +513,10 @@
         // Ensure proper visibility toggling between sections
         function showTrailTest() {
             trailTest.classList.remove('hidden');
-            resultsHistoryPage.classList.add('hidden');
         }
 
         function showResultsHistory() {
             trailTest.classList.add('hidden');
-            resultsHistoryPage.classList.remove('hidden');
         }
 
         document.querySelectorAll('#variant-a, #variant-b').forEach(button => {
