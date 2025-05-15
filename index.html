@@ -323,20 +323,20 @@
 
         function getPerformanceFeedback(timeTaken, failures, variant) {
             if (variant === 'A') {
-                if (timeTaken < 30) {
-                    return '🌟 Above Average Performance!';
-                } else if (timeTaken >= 30 && timeTaken <= 77) {
-                    return '👍 Average Performance.';
+                if (timeTaken <= 25) {
+                    return '🌟 Good: Indicates faster-than-typical processing speed and attention';
+                } else if (timeTaken <= 39) {
+                    return '👍 Average: Falls within a typical range for most users';
                 } else {
-                    return '📉 Deficient Performance.';
+                    return '📉 Below Average: May suggest slower processing or attention challenges';
                 }
             } else if (variant === 'B') {
-                if (timeTaken <= 75) {
-                    return '🌟 Above Average Performance!';
-                } else if (timeTaken > 75 && timeTaken <= 273) {
-                    return '👍 Average Performance.';
+                if (timeTaken <= 60) {
+                    return '🌟 Good: Suggests strong task-switching and executive function';
+                } else if (timeTaken <= 89) {
+                    return '👍 Average: Falls within a typical range for most users';
                 } else {
-                    return '📉 Deficient Performance.';
+                    return '📉 Below Average: May indicate challenges with task-switching or processing speed';
                 }
             }
             return '❓ Invalid variant.';
@@ -671,9 +671,9 @@
             const averageAIcon = document.getElementById('average-tmt-a-icon');
             const averageBIcon = document.getElementById('average-tmt-b-icon');
 
-            // Set icons based on performance interpretation
-            averageAIcon.textContent = averageA !== 'N/A' && averageA < 30 ? '🌟' : averageA <= 50 ? '👍' : '📉';
-            averageBIcon.textContent = averageB !== 'N/A' && averageB < 75 ? '🌟' : averageB <= 100 ? '👍' : '📉';
+            // Set icons based on updated performance interpretation
+            averageAIcon.textContent = averageA !== 'N/A' && averageA <= 25 ? '🌟' : averageA <= 39 ? '👍' : '📉';
+            averageBIcon.textContent = averageB !== 'N/A' && averageB <= 60 ? '🌟' : averageB <= 89 ? '👍' : '📉';
 
             document.getElementById('averages-modal').classList.remove('hidden');
         });

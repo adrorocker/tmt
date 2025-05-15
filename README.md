@@ -2,7 +2,16 @@
 
 A browser-based, interactive version of the **Trail Making Test (TMT)** — a neuropsychological task used to measure **processing speed**, **attention**, and **task switching**. Built for personal use and cognitive exploration, this tool runs directly in your browser with **mobile and desktop** support.
 
----
+## ⚠️ Disclaimer
+
+This web-based test is provided **only for personal or educational use**.
+
+- It is **not a diagnostic tool** and should not be relied upon for medical evaluation.
+- It is not a substitute for professional neurological or psychological assessment.
+- No clinical guarantees are made regarding timing, error tolerance, or scoring interpretation.
+- By using this tool, you agree that the authors and publishers are **not liable** for any misuse or misinterpretation of results.
+
+If you are concerned about your cognitive performance, please consult a licensed healthcare provider.
 
 ## 📋 What Is the Trail Making Test?
 
@@ -17,8 +26,6 @@ It exists in two versions:
 
 - **TMT-A**: Connect numbers in ascending order (1 → 2 → 3 … 25)
 - **TMT-B**: Alternate between numbers and letters (1 → A → 2 → B … 13)
-
----
 
 ## 🎮 How to Use It
 
@@ -35,8 +42,6 @@ It exists in two versions:
 
 📱 Mobile-friendly — just tap the circles on the screen.
 
----
-
 ## 🧪 Purpose
 
 This test is offered for **exploring mental processing speed** in an abstract and interactive way. While based on established clinical formats, it is not meant to replicate them exactly.
@@ -44,21 +49,6 @@ This test is offered for **exploring mental processing speed** in an abstract an
 - Inspired by standard cognitive assessments used in research and clinical trials
 - Great for practicing attention, sequencing, and speed under mild pressure
 
----
-
-## 📈 Performance Interpretation
-
-| Test  | Above Average  | Average Range  | Below Average    |
-|-------|----------------|----------------|------------------|
-| TMT-A | < 30 seconds   | 30–77 seconds  | > 78 seconds     |
-| TMT-B | < 75 seconds   | 75–237 seconds | > 238 seconds    |
-
-Results include:
-- ✅ Time to complete (in seconds)
-- ❌ Number of errors (wrong node selections)
-- 🌟 Feedback based on performance
-
----
 
 ## 🧾 Features
 
@@ -74,42 +64,14 @@ Results include:
 - ✅ Node sizes dynamically adjust based on screen resolution for better touch interaction
 - ✅ TMT-B generates exactly 25 nodes, alternating between numbers and letters
 
----
-
 ## 🔐 Data Privacy
 
 All results are stored locally using the browser's `localStorage`. This means your data remains private and is not transmitted to any server. You can delete all stored results at any time by clicking the **Delete All History** button in the **Settings** section.
-
----
-
-## ⚠️ Disclaimer
-
-This web-based test is provided **only for personal or educational use**.
-
-- It is **not a diagnostic tool** and should not be relied upon for medical evaluation.
-- It is not a substitute for professional neurological or psychological assessment.
-- No clinical guarantees are made regarding timing, error tolerance, or scoring interpretation.
-- By using this tool, you agree that the authors and publishers are **not liable** for any misuse or misinterpretation of results.
-
-If you are concerned about your cognitive performance, please consult a licensed healthcare provider.
-
----
 
 ## 📄 License
 
 This project is released under the **MIT License**. See the [LICENSE](./LICENSE) file for details. Feel free to use, fork, or adapt it.
 
----
-
 ## 🙌 Authors
 
 [Adro Morelos](https://github.com/adrorocker)
-
----
-
-## 📚 References
-
-- Reitan, R. M. (1955). *The relation of the trail making test to organic brain damage*. Journal of Consulting Psychology, 19(5), 393–394. [DOI:10.1037/h0044509](https://doi.org/10.1037/h0044509)
-- Lezak, M. D., Howieson, D. B., & Loring, D. W. (2004). *Neuropsychological Assessment* (4th ed.). Oxford University Press.
-- [NIH Cognitive Assessment Toolkit – Trail Making Test](https://www.ncbi.nlm.nih.gov/books/NBK305230/)
-- [ScienceDirect Topic: Trail Making Test](https://www.sciencedirect.com/topics/medicine-and-dentistry/trail-making-test)
