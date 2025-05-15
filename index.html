@@ -193,7 +193,7 @@
         let timerInterval;
         let failureCount = 0; // Track the number of failures
 
-        let colorChangingFeedback = true; // Configuration for color-changing feedback
+        let colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? false; // Default to false
 
         // Toggle sidebar open/close
         function toggleSidebar() {
@@ -484,7 +484,7 @@
             } else if (screenWidth >= 768) {
                 return 56; // Medium size for tablets
             } else {
-                return 60; // Default size for smaller screens
+                return 40; // Smaller size for smaller screens
             }
         }
 
@@ -577,7 +577,7 @@
         // Ensure the reopen button is hidden when the page loads
         window.addEventListener('DOMContentLoaded', () => {
             // Initialize color-changing feedback state from localStorage
-            colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? true;
+            colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? false; // Default to false
             feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
         });
 
