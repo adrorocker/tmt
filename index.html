@@ -86,6 +86,9 @@
                                 Choose a variant to start and test your skills.
                             </span>
                         </p>
+                        <p class="text-center text-sm text-gray-500 italic">
+                            ⚠️ This test is for personal or educational use only and is not a diagnostic tool. Consult a licensed healthcare provider for concerns about cognitive performance.
+                        </p>
                         <div class="flex space-x-4">
                             <button id="start-variant-a" class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-300">
                                 Start Variant A
@@ -185,7 +188,8 @@
         document.querySelector('.navbar .flex').appendChild(timerDisplay);
 
         const nextValueToggle = document.getElementById('next-value-toggle');
-        let showNextValue = JSON.parse(localStorage.getItem('showNextValue')) ?? true;
+        let showNextValue = JSON.parse(localStorage.getItem('showNextValue')) ?? false; // Default to false
+        nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
 
         let currentNumber = 1;
         let totalCircles = 0;

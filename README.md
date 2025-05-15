@@ -66,17 +66,19 @@ Results include:
 - ✅ Dynamic TMT-A (up to 25 nodes) and TMT-B (up to 26 nodes, alternating numbers and letters up to M) node generation
 - ✅ Performance tracking (Time, Errors)
 - ✅ Historical results screen with timestamps, ordered by date
-- ✅ Timer starts only when the **first correct node** is selected
-- ✅ "Show Next Value" toggle for guidance during the test
+- ✅ Timer starts only when the **first node** is clicked
+- ✅ "Show Next Value" toggle for guidance during the test (disabled by default, can be toggled in settings)
+- ✅ Color feedback for correct (green) and incorrect (red) node selections (disabled by default, can be toggled in settings)
 - ✅ Results modal with detailed feedback
 - ✅ Keyboard shortcuts (e.g., press **H** to open Results History)
 - ✅ Node sizes dynamically adjust based on screen resolution for better touch interaction
+- ✅ TMT-B generates exactly 25 nodes, alternating between numbers and letters
 
 ---
 
 ## 🔐 Data Privacy
 
-All results are stored locally using the browser's `localStorage`. This means your data remains private and is not transmitted to any server. You can delete all stored results at any time by clicking the **Delete All History** button in the Results History screen.
+All results are stored locally using the browser's `localStorage`. This means your data remains private and is not transmitted to any server. You can delete all stored results at any time by clicking the **Delete All History** button in the **Settings** section.
 
 ---
 
@@ -95,7 +97,7 @@ If you are concerned about your cognitive performance, please consult a licensed
 
 ## 📄 License
 
-This project is released under the **MIT License**. Feel free to use, fork, or adapt it.
+This project is released under the **MIT License**. See the [LICENSE](./LICENSE) file for details. Feel free to use, fork, or adapt it.
 
 ---
 
