@@ -378,17 +378,20 @@
 
             let timerStarted = false; // Track if the timer has started
             const items = [];
+            totalCircles = 25; // Ensure 25 nodes for both variants
+
             if (variant === 'A') {
-                totalCircles = 25;
                 for (let i = 1; i <= totalCircles; i++) {
                     items.push(i.toString());
                 }
             } else if (variant === 'B') {
-                totalCircles = 25; // Adjust total circles for alternating numbers and letters
-                for (let i = 1; i <= totalCircles / 2; i++) {
+                for (let i = 1; i <= Math.ceil(totalCircles / 2); i++) {
                     items.push(i.toString());
-                    items.push(String.fromCharCode(64 + i)); // A, B, C...
+                    if (items.length < totalCircles) {
+                        items.push(String.fromCharCode(64 + i)); // A, B, C...
+                    }
                 }
+                items.length = totalCircles; // Trim to 25 nodes if necessary
             }
 
             const containerRect = trailContainer.getBoundingClientRect();
@@ -397,10 +400,11 @@
             items.forEach((item, index) => {
                 let top, left;
                 let overlap;
+                const padding = 10; // Add padding to ensure nodes are fully visible
                 do {
                     overlap = false;
-                    top = Math.random() * (containerRect.height - nodeSize); // Avoid edges
-                    left = Math.random() * (containerRect.width - nodeSize); // Avoid edges
+                    top = Math.random() * (containerRect.height - nodeSize - padding * 2) + padding; // Avoid edges
+                    left = Math.random() * (containerRect.width - nodeSize - padding * 2) + padding; // Avoid edges
                     for (const pos of positions) {
                         const distance = Math.sqrt(
                             Math.pow(pos.top - top, 2) + Math.pow(pos.left - left, 2)
