@@ -488,11 +488,11 @@
         function calculateNodeSize() {
             const screenWidth = window.innerWidth;
             if (screenWidth >= 1024) {
-                return 74; // Larger size for desktop screens
+                return 80; // Larger size for desktop screens
             } else if (screenWidth >= 768) {
-                return 56; // Medium size for tablets
+                return 64; // Medium size for tablets
             } else {
-                return 40; // Smaller size for smaller screens
+                return 50; // Larger size for smaller screens
             }
         }
 
