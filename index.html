@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive Trail Making Test (TMT-A & TMT-B) to measure processing speed, attention, and task-switching. Test your cognitive skills online!">
+    <meta property="og:description" content="Interactive Trail Making Test (TMT-A & TMT-B) to measure processing speed, attention, and task-switching. Test your cognitive skills online!">
     <title>Trail Making Test</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -382,7 +384,7 @@
                     items.push(i.toString());
                 }
             } else if (variant === 'B') {
-                totalCircles = 26; // Adjust total circles for alternating numbers and letters
+                totalCircles = 25; // Adjust total circles for alternating numbers and letters
                 for (let i = 1; i <= totalCircles / 2; i++) {
                     items.push(i.toString());
                     items.push(String.fromCharCode(64 + i)); // A, B, C...
@@ -422,11 +424,11 @@
                 circle.dataset.order = index + 1;
 
                 // Set font size based on screen width
-                circle.style.fontSize = '16px'; // Default font size
+                circle.style.fontSize = '20px'; // Default font size
                 if (window.innerWidth >= 1024) {
-                    circle.style.fontSize = '20px'; // Larger font size for desktop screens
+                    circle.style.fontSize = '25px'; // Larger font size for desktop screens
                 } else if (window.innerWidth >= 768) {
-                    circle.style.fontSize = '18px'; // Medium font size for tablets
+                    circle.style.fontSize = '23px'; // Medium font size for tablets
                 }
 
                 circle.addEventListener('click', () => {
