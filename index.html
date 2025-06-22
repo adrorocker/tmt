@@ -424,7 +424,7 @@
 
                 const circle = document.createElement('div');
                 circle.textContent = item;
-                circle.className = 'absolute border border-black flex items-center justify-center rounded-full cursor-pointer';
+                circle.className = 'absolute border shadow-md shadow-gray-300 border-black flex items-center justify-center rounded-full cursor-pointer';
                 circle.style.width = `${nodeSize}px`;
                 circle.style.height = `${nodeSize}px`;
                 circle.style.top = `${top}px`;
@@ -432,12 +432,7 @@
                 circle.dataset.order = index + 1;
 
                 // Set font size based on screen width
-                circle.style.fontSize = '25px'; // Default font size
-                if (window.innerWidth >= 1024) {
-                    circle.style.fontSize = '30px'; // Larger font size for desktop screens
-                } else if (window.innerWidth >= 768) {
-                    circle.style.fontSize = '25px'; // Medium font size for tablets
-                }
+                circle.style.fontSize = `${nodeSize / 2}px`; // Dynamically set font size based on node size
 
                 circle.addEventListener('click', () => {
                     if (!timerStarted) {
@@ -489,11 +484,11 @@
         function calculateNodeSize() {
             const screenWidth = window.innerWidth;
             if (screenWidth >= 1024) {
-                return 80; // Larger size for desktop screens
+                return 100; // Larger size for desktop screens
             } else if (screenWidth >= 768) {
-                return 64; // Medium size for tablets
+                return 80; // Medium size for tablets
             } else {
-                return 50; // Larger size for smaller screens
+                return 60; // Larger size for smaller screens
             }
         }
 
