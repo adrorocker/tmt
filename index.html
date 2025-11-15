@@ -164,12 +164,7 @@
         nextNodeDisplay.id = 'next-node-display';
         nextNodeDisplay.className = 'ml-4 text-yellow-600 font-bold hidden';
         nextNodeDisplay.textContent = 'Next: ';
-
-        // Safely append nextNodeDisplay only if navbar exists and doesn't already contain it
-        const navbarFlexForNext = document.querySelector('.navbar .flex');
-        if (navbarFlexForNext && !document.getElementById('next-node-display')) {
-            navbarFlexForNext.appendChild(nextNodeDisplay);
-        }
+        document.querySelector('.navbar .flex').appendChild(nextNodeDisplay);
 
         const initialDescription = document.getElementById('initial-description');
 
@@ -181,39 +176,20 @@
             }
         }
 
-        // Move the timer display after the next value clue - only if not already added
-        const navbarFlex = document.querySelector('.navbar .flex');
-        if (navbarFlex && !navbarFlex.contains(timerDisplay)) {
-            navbarFlex.appendChild(timerDisplay);
-        }
+        document.getElementById('variant-a').addEventListener('click', () => {
+            updateDescription('A');
+        });
+
+        document.getElementById('variant-b').addEventListener('click', () => {
+            updateDescription('B');
+        });
+
+        // Move the timer display after the next value clue
+        document.querySelector('.navbar .flex').appendChild(timerDisplay);
 
         const nextValueToggle = document.getElementById('next-value-toggle');
-
-        // Safe localStorage getters with error handling
-        function getLocalStorageItem(key, defaultValue) {
-            try {
-                const item = localStorage.getItem(key);
-                return item !== null ? JSON.parse(item) : defaultValue;
-            } catch (e) {
-                console.error(`Error reading localStorage key "${key}":`, e);
-                return defaultValue;
-            }
-        }
-
-        function setLocalStorageItem(key, value) {
-            try {
-                localStorage.setItem(key, JSON.stringify(value));
-                return true;
-            } catch (e) {
-                console.error(`Error writing to localStorage key "${key}":`, e);
-                return false;
-            }
-        }
-
-        let showNextValue = getLocalStorageItem('showNextValue', false);
-        if (nextValueToggle) {
-            nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
-        }
+        let showNextValue = JSON.parse(localStorage.getItem('showNextValue')) ?? false; // Default to false
+        nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
 
         let currentNumber = 1;
         let totalCircles = 0;
@@ -221,7 +197,7 @@
         let timerInterval;
         let failureCount = 0; // Track the number of failures
 
-        let colorChangingFeedback = getLocalStorageItem('colorChangingFeedback', false);
+        let colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? false; // Default to false
 
         // Toggle sidebar open/close
         function toggleSidebar() {
@@ -260,40 +236,27 @@
         });
 
         // Info Popup Logic
-        if (infoIcon && infoPopup) {
-            infoIcon.addEventListener('click', () => {
-                infoPopup.classList.toggle('hidden');
-            });
-        }
+        infoIcon.addEventListener('click', () => {
+            infoPopup.classList.toggle('hidden');
+        });
 
-        if (closePopup && infoPopup) {
-            closePopup.addEventListener('click', () => {
-                infoPopup.classList.add('hidden');
-            });
-        }
+        closePopup.addEventListener('click', () => {
+            infoPopup.classList.add('hidden');
+        });
 
 
         const deleteAllHistoryButton = document.getElementById('delete-all-history');
 
         deleteAllHistoryButton.addEventListener('click', () => {
             if (confirm('Are you sure you want to delete all history? This action cannot be undone.')) {
-                try {
-                    localStorage.removeItem('resultsHistory');
-                    renderResultsHistory(); // Refresh the history page
-                } catch (e) {
-                    console.error('Error deleting history:', e);
-                    alert('Failed to delete history. Please try again.');
-                }
+                localStorage.removeItem('resultsHistory');
+                renderResultsHistory(); // Refresh the history page
             }
         });
 
         function renderResultsHistory() {
-            if (!resultsList) {
-                console.error('Results list element not found');
-                return;
-            }
             resultsList.innerHTML = '';
-            const results = getLocalStorageItem('resultsHistory', []);
+            const results = JSON.parse(localStorage.getItem('resultsHistory')) || [];
             if (results.length === 0) {
                 const emptyMessage = document.createElement('p');
                 emptyMessage.textContent = '📭 No results available.';
@@ -338,7 +301,7 @@
                 deleteButton.addEventListener('click', () => {
                     if (confirm('Are you sure you want to delete this history item?')) {
                         results.splice(index, 1);
-                        setLocalStorageItem('resultsHistory', results);
+                        localStorage.setItem('resultsHistory', JSON.stringify(results));
                         renderResultsHistory(); // Refresh the history page
                     }
                 });
@@ -381,10 +344,8 @@
 
         function updateNextValuePreference() {
             showNextValue = !showNextValue;
-            setLocalStorageItem('showNextValue', showNextValue);
-            if (nextValueToggle) {
-                nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
-            }
+            localStorage.setItem('showNextValue', JSON.stringify(showNextValue));
+            nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
             if (!showNextValue) {
                 nextNodeDisplay.classList.add('hidden');
             } else {
@@ -392,46 +353,28 @@
             }
         }
 
-        if (nextValueToggle) {
-            nextValueToggle.addEventListener('click', updateNextValuePreference);
-        }
+        nextValueToggle.addEventListener('click', updateNextValuePreference);
 
         // Toggle color-changing feedback
         function toggleColorChangingFeedback() {
             colorChangingFeedback = !colorChangingFeedback;
-            setLocalStorageItem('colorChangingFeedback', colorChangingFeedback);
-            if (feedbackToggle) {
-                feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
-            }
+            localStorage.setItem('colorChangingFeedback', JSON.stringify(colorChangingFeedback));
+            feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
         }
 
         // Add a toggle button for color-changing feedback in the settings section
         const feedbackToggle = document.getElementById('feedback-toggle');
-        if (feedbackToggle) {
-            feedbackToggle.addEventListener('click', toggleColorChangingFeedback);
-        }
+        feedbackToggle.addEventListener('click', toggleColorChangingFeedback);
 
         // Trail Making Test Script
         function resetTestState() {
-            if (!trailContainer) {
-                console.error('Trail container not found');
-                return;
-            }
-
-            // Remove all circle elements and their event listeners to prevent memory leaks
-            const circles = trailContainer.querySelectorAll('.rounded-full');
-            circles.forEach(circle => {
-                circle.replaceWith(circle.cloneNode(true)); // Remove event listeners
-            });
-
             // Clear the trail container and reset variables
             trailContainer.innerHTML = '';
-            if (timerDisplay) timerDisplay.classList.add('hidden');
-            if (nextNodeDisplay) nextNodeDisplay.classList.add('hidden');
+            timerDisplay.classList.add('hidden');
+            nextNodeDisplay.classList.add('hidden');
             currentNumber = 1;
             failureCount = 0;
             clearInterval(timerInterval); // Stop any running timer
-            timerInterval = null; // Clear the interval reference
         }
 
         function generateCircles(variant) {
@@ -461,8 +404,6 @@
             items.forEach((item, index) => {
                 let top, left;
                 let overlap;
-                let attempts = 0;
-                const maxAttempts = 1000; // Prevent infinite loop
                 const padding = 10; // Add padding to ensure nodes are fully visible
                 do {
                     overlap = false;
@@ -476,11 +417,6 @@
                             overlap = true;
                             break;
                         }
-                    }
-                    attempts++;
-                    if (attempts >= maxAttempts) {
-                        console.warn(`Could not find non-overlapping position for circle ${index + 1} after ${maxAttempts} attempts. Placing anyway.`);
-                        overlap = false; // Force placement to avoid infinite loop
                     }
                 } while (overlap);
 
@@ -536,9 +472,6 @@
         }
 
         function updateNextNodeDisplay() {
-            if (!nextNodeDisplay) {
-                return;
-            }
             const nextNode = document.querySelector(`[data-order="${currentNumber}"]`);
             if (nextNode) {
                 nextNodeDisplay.textContent = `Next: ${nextNode.textContent}`;
@@ -560,28 +493,18 @@
         }
 
         function startTimer() {
-            if (!timerDisplay) {
-                console.error('Timer display element not found');
-                return;
-            }
             startTime = new Date();
             timerDisplay.textContent = `⏱ 0 seconds`; // Display timer immediately
             timerDisplay.classList.remove('hidden'); // Ensure the timer is visible from the start
             timerInterval = setInterval(() => {
                 const elapsedTime = Math.floor((new Date() - startTime) / 1000); // Display only seconds
-                if (timerDisplay) {
-                    timerDisplay.textContent = `⏱ ${elapsedTime} seconds`;
-                }
+                timerDisplay.textContent = `⏱ ${elapsedTime} seconds`;
             }, 1000); // Update every second
         }
 
         function stopTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-            if (timerDisplay) {
-                timerDisplay.classList.add('hidden'); // Hide the timer after the test is completed
-            }
+            clearInterval(timerInterval);
+            timerDisplay.classList.add('hidden'); // Hide the timer after the test is completed
         }
 
         function resetErrorNodes() {
@@ -592,13 +515,21 @@
         }
 
         function saveResultToLocalStorage(variant, timeTaken, failures) {
-            const results = getLocalStorageItem('resultsHistory', []);
+            const results = JSON.parse(localStorage.getItem('resultsHistory')) || [];
             results.push({ variant, timeTaken, failures, date: new Date().toLocaleString() });
-            setLocalStorageItem('resultsHistory', results);
+            localStorage.setItem('resultsHistory', JSON.stringify(results));
         }
 
-        // Track the current variant
-        let currentVariant = 'A';
+        // Add event listeners for Variant A and Variant B buttons
+        let currentVariant = 'A'; // Track the current variant
+        document.getElementById('variant-a').addEventListener('click', () => {
+            currentVariant = 'A';
+            generateCircles('A');
+        });
+        document.getElementById('variant-b').addEventListener('click', () => {
+            currentVariant = 'B';
+            generateCircles('B');
+        });
 
         // Initialize the toggle button state
         nextValueToggle.textContent = `Show Next Value: ${showNextValue ? 'On' : 'Off'}`;
@@ -650,10 +581,8 @@
         // Ensure the reopen button is hidden when the page loads
         window.addEventListener('DOMContentLoaded', () => {
             // Initialize color-changing feedback state from localStorage
-            colorChangingFeedback = getLocalStorageItem('colorChangingFeedback', false);
-            if (feedbackToggle) {
-                feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
-            }
+            colorChangingFeedback = JSON.parse(localStorage.getItem('colorChangingFeedback')) ?? false; // Default to false
+            feedbackToggle.textContent = `Color Feedback: ${colorChangingFeedback ? 'On' : 'Off'}`;
         });
 
         // Ensure proper visibility toggling between sections
@@ -665,23 +594,11 @@
             trailTest.classList.add('hidden');
         }
 
-        // Event listeners for variant buttons - consolidated to avoid duplicates
-        const variantAButtons = document.querySelectorAll('#variant-a, #start-variant-a');
-        const variantBButtons = document.querySelectorAll('#variant-b, #start-variant-b');
-
-        variantAButtons.forEach(button => {
+        document.querySelectorAll('#variant-a, #variant-b').forEach(button => {
             button.addEventListener('click', () => {
                 showTrailTest();
-                currentVariant = 'A';
-                generateCircles('A');
-            });
-        });
-
-        variantBButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                showTrailTest();
-                currentVariant = 'B';
-                generateCircles('B');
+                const variant = button.id === 'variant-a' ? 'A' : 'B';
+                generateCircles(variant);
             });
         });
 
@@ -717,13 +634,23 @@
             }
         });
 
+        document.getElementById('start-variant-a').addEventListener('click', () => {
+            currentVariant = 'A';
+            generateCircles('A');
+        });
+
+        document.getElementById('start-variant-b').addEventListener('click', () => {
+            currentVariant = 'B';
+            generateCircles('B');
+        });
+
         document.getElementById('open-results-history').addEventListener('click', () => {
             renderResultsHistory(); // Populate the results history
             document.getElementById('results-history-modal').classList.remove('hidden'); // Show the modal
         });
 
         document.getElementById('open-averages').addEventListener('click', () => {
-            const results = getLocalStorageItem('resultsHistory', []);
+            const results = JSON.parse(localStorage.getItem('resultsHistory')) || [];
             const tmtAResults = results.filter(result => result.variant === 'A');
             const tmtBResults = results.filter(result => result.variant === 'B');
 
