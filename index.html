@@ -7,6 +7,19 @@
     <meta property="og:description" content="Interactive Trail Making Test (TMT-A & TMT-B) to measure processing speed, attention, and task-switching. Test your cognitive skills online!">
     <title>Trail Making Test</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeOutRed {
+            0% {
+                background-color: rgb(252 165 165); /* bg-red-300 */
+            }
+            100% {
+                background-color: transparent;
+            }
+        }
+        .fade-out-red {
+            animation: fadeOutRed 3s forwards;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div id="layout" class="flex h-screen transition-transform duration-300">
@@ -461,7 +474,7 @@
                         if (colorChangingFeedback) {
                             circle.classList.add('bg-green-500'); // Correct node with color feedback
                         }
-                        resetErrorNodes(); // Reset any error nodes
+                        resetErrorNodes(); // Reset any error nodes immediately
                         if (currentNumber === totalCircles) {
                             circle.textContent += '!'; // Add "!" to the last node
                         }
@@ -476,7 +489,8 @@
                             showResultsModal(timeTaken, failureCount, variant); // Show modal with results
                         }
                     } else {
-                        circle.classList.add('bg-red-300'); // Incorrect node
+                        circle.classList.add('bg-red-300'); // Incorrect node with red background
+                        circle.classList.add('fade-out-red'); // Start 3-second fade animation
                         failureCount++; // Increment the error counter
                     }
                 });
@@ -529,9 +543,12 @@
         }
 
         function resetErrorNodes() {
-            const errorNodes = document.querySelectorAll('.bg-red-300');
+            const errorNodes = document.querySelectorAll('.bg-red-300, .fade-out-red');
             errorNodes.forEach(node => {
                 node.classList.remove('bg-red-300');
+                node.classList.remove('fade-out-red');
+                // Reset inline background color that might be set by animation
+                node.style.backgroundColor = '';
             });
         }
 
